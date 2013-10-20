@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            #remoteVideos video {
-                height: 150px;
-            }
-            #localVideo {
-                height: 150px;
-            }
-        </style>
+      <style>
+        .gameboard {
+          width: 500;
+          height: 500;
+        }
+
+        .ball {
+          width: 20px;
+          height: 20px;
+          background: coral;
+        }
+
+        
+
+      </style>
     </head>
     <body>
-        <video id="localVideo">
-        <div id="remoteVideos"></div>
+        <div class='gameboard'>
+          <div class='ball'></div>
+        </div>
         <script src='gameserver.bundle.js'></script>
     </body>
 </html>

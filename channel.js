@@ -43,6 +43,9 @@ module.exports = function Channel(opts) {
 
     channel.onmessage = function(event) {
       var message = JSON.parse(event.data);
+      var queue = onCallbacks[ message.name];
+
+      if (!queue) return false
 
       onCallbacks[ message.name ].forEach(function(cb) {
         cb(message.data);
