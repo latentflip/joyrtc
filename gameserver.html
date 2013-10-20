@@ -1,1 +1,18 @@
-<script src='gameserver.bundle.js'></script>
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            #remoteVideos video {
+                height: 150px;
+            }
+            #localVideo {
+                height: 150px;
+            }
+        </style>
+    </head>
+    <body>
+        <video id="localVideo">
+        <div id="remoteVideos"></div>
+        <script src='gameserver.bundle.js'></script>
+    </body>
+</html>
