@@ -13,7 +13,6 @@
 // }, 500)
 
 var bows = require('bows');
-var Player = require('./player.js');
 
 window.io = require('socket.io-client');
 var SimpleWebRTC = require('simplewebrtc');

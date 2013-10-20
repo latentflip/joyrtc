@@ -2,21 +2,72 @@
 <html>
     <head>
         <style>
+            a {
+                opacity: 0;
+            }
+            #up {
+                position: absolute;
+                top: 102px;
+                left: 87px;
+                height: 37px;
+                width: 43px;
+            }
+            #down {
+                position: absolute;
+                top: 176px;
+                left: 88px;
+                height: 37px;
+                width: 43px;
+            }
+            #left {
+                position: absolute;
+                top: 139px;
+                left: 52px;
+                height: 37px;
+                width: 43px;
+            }
+            #right {
+                position: absolute;
+                top: 139px;
+                left: 122px;
+                height: 37px;
+                width: 43px;
+            }
+            #a {
+                position: absolute;
+                top: 144px;
+                left: 481px;
+                height: 77px;
+                width: 73px;
+            }
+            #b {
+                position: absolute;
+                top: 145px;
+                left: 400px;
+                height: 77px;
+                width: 73px;
+            }
+            #controller {
+                width: 100%;
+            }
+
             #remoteVideos video {
                 height: 150px;
             }
+
             #localVideo {
                 height: 150px;
             }
         </style>
     </head>
     <body>
-        <button id="up">Up</button>
-        <button id="down">Down</button>
-        <button id="left">Left</button>
-        <button id="right">Right</button>
-        <button id="a">A</button>
-        <button id="b">B</button>
+        <img src="img/nes-controller.svg" />
+        <a id="up" href="#">Up</a>
+        <a id="down" href="#">Down</a>
+        <a id="left" href="#">Left</a>
+        <a id="right" href="#">Right</a>
+        <a id="a" href="#">A</a>
+        <a id="b" href="#">B</a>
         <script src='gamepad.bundle.js'></script>
     </body>
 </html>
