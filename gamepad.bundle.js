@@ -29,7 +29,12 @@ module.exports = function Channel(opts) {
       // the id/element dom element that will hold remote videos
       //remoteVideosEl: 'remoteVideos',
       // immediately ask for camera access
-      autoRequestMedia: true
+      autoRequestMedia: true,
+
+      media: {
+        audio: false,
+        video: false
+      }
   });
 
   webrtc.on('readyToCall', function () {
@@ -94,29 +99,45 @@ var channel = new Channel({
   roomName: 'foo'
 });
 
-// setInterval(function() {
-// 	channel.emit('button:press', {button: 'up'});
-// }, 100);
+var up, down, left, right;
+
 
 $('document').ready(function() {
 	fastclick(document.body);
 
-	$('#up').click(function() {
-		channel.emit('button:press', {button: 'up'});
-		log('up button')
+	setInterval(function() {
+		if (up) channel.emit('button:press', {button: 'up'});
+		if (down) channel.emit('button:press', {button: 'down'});
+		if (left) channel.emit('button:press', {button: 'left'});
+		if (right) channel.emit('button:press', {button: 'right'});
+
+	}, 25)
+
+	$('#up').on('touchstart', function() {
+		up = true
+	}).bind('touchend', function() {
+	    up = false
 	});
-	$('#down').click(function() {
-		channel.emit('button:press', {button: 'down'});
-		log('down button')
+
+
+	$('#down').on('touchstart', function() {
+		down = true
+	}).bind('touchend', function() {
+	    down = false
 	});
-	$('#left').click(function() {
-		channel.emit('button:press', {button: 'left'});
-		log('left button')
+
+	$('#left').on('touchstart', function() {
+	    left = true
+	}).bind('touchend', function() {
+	    left = false
 	});
-	$('#right').click(function() {
-		channel.emit('button:press', {button: 'right'});
-		log('right button')
+
+	$('#right').on('touchstart', function() {
+	    right = true
+	}).bind('touchend', function() {
+	    right = false
 	});
+
 	$('#a').click(function() {
 		channel.emit('button:press', {button: 'A'});
 		log('A button')

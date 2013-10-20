@@ -28,7 +28,12 @@ module.exports = function Channel(opts) {
       // the id/element dom element that will hold remote videos
       //remoteVideosEl: 'remoteVideos',
       // immediately ask for camera access
-      autoRequestMedia: true
+      autoRequestMedia: true,
+
+      media: {
+        audio: false,
+        video: false
+      }
   });
 
   webrtc.on('readyToCall', function () {
