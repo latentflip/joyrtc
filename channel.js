@@ -1,4 +1,3 @@
-
 // var Channel = require('./channel.js')
 // 
 // var channel = new Channel({
@@ -13,11 +12,14 @@
 //   channel.emit('button:press', { data: 'foo' })
 // }, 500)
 
+var bows = require('bows');
+var Player = require('./player.js');
 
 window.io = require('socket.io-client');
 var SimpleWebRTC = require('simplewebrtc');
 
 module.exports = function Channel(opts) {
+  var log = bows('Channel')
   
   var roomName = opts.roomName;
 
@@ -31,6 +33,7 @@ module.exports = function Channel(opts) {
   });
 
   webrtc.on('readyToCall', function () {
+      log('Ready to call');
       // you can name it anything
       webrtc.joinRoom(roomName);
   });
@@ -38,10 +41,12 @@ module.exports = function Channel(opts) {
   var onCallbacks = {};
   var channel;
 
-  var setupChannel = function(peer) {
+  var setupPeer = function(peer) {
+    log("Add peer", peer);
     channel = peer.channels.unreliable
 
     channel.onmessage = function(event) {
+      log('onmessage', event);
       var message = JSON.parse(event.data);
       var queue = onCallbacks[ message.name];
 
@@ -50,11 +55,16 @@ module.exports = function Channel(opts) {
       onCallbacks[ message.name ].forEach(function(cb) {
         cb(message.data);
       });
-
     }
   };
 
-  webrtc.webrtc.on('peerStreamAdded', setupChannel);
+  var killPeer = function(peer) {
+    log('Lost peer', peer);
+  }
+
+  webrtc.webrtc.on('peerStreamAdded', setupPeer);
+  webrtc.webrtc.on('peerStreamRemoved', killPeer);
+  console.log("Bound to ", webrtc.webrtc);
 
   var on = function on(eventName, cb) {
     onCallbacks[eventName] = onCallbacks[eventName] || [];
