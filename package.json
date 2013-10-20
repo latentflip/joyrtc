@@ -12,6 +12,7 @@
     "simplewebrtc": "~1.1.0",
     "socket.io-client": "~0.9.16",
     "bows": "~0.2.0",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "~1.4.1",
+    "jquery-browserify": ""
   }
 }

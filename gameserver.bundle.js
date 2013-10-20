@@ -92,7 +92,7 @@ var channel = new Channel({
 
 
 channel.on('button:press', function(data) {
-  console.log("We got a ", data, "button press for ", player.id);
+  console.log("We got a ", data, "button press for ");
 });
 
 },{"./channel.js":1}],3:[function(require,module,exports){
