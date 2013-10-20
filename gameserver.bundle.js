@@ -1,4 +1,20 @@
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+// var Channel = require('./channel.js')
+// 
+// var channel = new Channel({
+//   roomName: 'foo'
+// });
+// 
+// channel.on('button:press', function(data) {
+//   console.log("We got a ", data, "button press");
+// });
+// 
+// setInterval(function() {
+//   channel.emit('button:press', { data: 'foo' })
+// }, 500)
+
+
 window.io = require('socket.io-client');
 var SimpleWebRTC = require('simplewebrtc');
 
@@ -28,6 +44,9 @@ module.exports = function Channel(opts) {
 
     channel.onmessage = function(event) {
       var message = JSON.parse(event.data);
+      var queue = onCallbacks[ message.name];
+
+      if (!queue) return false
 
       onCallbacks[ message.name ].forEach(function(cb) {
         cb(message.data);
@@ -64,14 +83,6 @@ var channel = new Channel({
 channel.on('button:press', function(data) {
   console.log("We got a ", data, "button press");
 });
-
-setInterval(function() {
-  channel.emit('button:press', { data: 'foo' })
-}, 500)
-
-
-
-
 
 },{"./channel.js":1}],3:[function(require,module,exports){
 module.exports = function (stream, el, options) {

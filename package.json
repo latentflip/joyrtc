@@ -10,6 +10,7 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "simplewebrtc": "~1.1.0",
-    "socket.io-client": "~0.9.16"
+    "socket.io-client": "~0.9.16",
+    "jquery-browserify": ""
   }
 }
