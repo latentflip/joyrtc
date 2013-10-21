@@ -30,7 +30,11 @@ module.exports = function Channel(opts) {
       // the id/element dom element that will hold remote videos
       //remoteVideosEl: 'remoteVideos',
       // immediately ask for camera access
-      autoRequestMedia: true
+      autoRequestMedia: true,
+      media: {
+        audio: false,
+        video: false
+      }
   });
 
   webrtc.on('readyToCall', function () {
@@ -93,23 +97,34 @@ var channel = new Channel({
 });
 
 
+function pressKey(key) {
+  var keys = {
+    left: [37, 65],       // a,     left
+    right: [39, 68],      // d,     right
+    up: [38, 87, 32],     // w,     up
+    down: [40, 83],       // s,     down
+    sprint: [16, 17],     // shift, ctrl
+    pause: [80],          // p
+  }
+
+  var press = jQuery.Event("keydown");
+  press.ctrlKey = false;
+  press.which = press.keyCode = keys[key][0];
+
+  $("body").trigger(press);
+  setTimeout(function() {
+    var press = jQuery.Event("keyup");
+    press.ctrlKey = false;
+    press.which = press.keyCode = keys[key][0];
+    $("body").trigger(press);
+  }, 100);
+}
+
+window.pressKey = pressKey;
+
 $(function() {
-  var $ball = $('.ball');
-
   channel.on('button:press', function(data) {
-    if (data.button == "up")
-      $ball.css({ top: -10 + parseInt($ball.css('top'), 10) })
-
-    if (data.button == "down")
-      $ball.css({ top: 10 + parseInt($ball.css('top'), 10) })
-
-    if (data.button == "left")
-      $ball.css({ left: -10 + parseInt($ball.css('left'), 10) })
-
-    if (data.button == "right")
-      $ball.css({ left: 10 + parseInt($ball.css('left'), 10) })
-
-    console.log("We got a ", data, "button press for ");
+    pressKey(data.button)
   });
 });
 
@@ -10333,8 +10348,8 @@ function WebRTC(opts) {
             },
             autoAdjustMic: false,
             media: {
-                audio: true,
-                video: true
+                audio: false,
+                video: false
             },
             detectSpeakingEvents: true,
             enableDataChannels: true
