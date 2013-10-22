@@ -1,4 +1,125 @@
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var AnalogView = function AnalogView(opts) {
+  console.log(opts);
+  if (!opts.analog) throw "Analog Required";
+  this.analog = opts.analog;
+  this.width = opts.width || 100;
+  this.height = opts.height || 100;
+  this.top = opts.top || 0;
+  this.left = opts.left || 0;
+  this.template = opts.template || "";
+  this.$el = $('<div>');
+  this.position = [0,0];
+
+  this.touchstart = this.touchstart.bind(this);
+  this.touchmove = this.touchmove.bind(this);
+  this.touchend = this.touchend.bind(this);
+};
+
+AnalogView.prototype.render = function render() {
+  this.$el.append(this.template);
+  this.$el.css({
+    width: this.width,
+    height: this.height,
+    top: this.top,
+    left: this.left,
+    position: 'absolute'
+  })
+  this.bindEvents();
+};
+
+AnalogView.prototype.appendTo = function appendTo($target) {
+  this.render();
+  $target.append(this.$el);
+  return this;
+};
+
+AnalogView.prototype.bindEvents = function bindEvents() {
+  var self = this;
+  this.$el.on('touchstart', function(ev) {
+    self.touchstart(ev)
+    self.touchmove(ev);
+  });
+  this.$el.on('touchmove', this.touchmove);
+  this.$el.on('touchend touchleave', this.touchend);
+  this.$el.on('touchleave', function() {
+    console.log("LEAVE")
+  });
+};
+
+
+var offset, width, height;
+var getTouchEventPosition = function getTouchEventPosition($el, ev) {
+  var originalEvent = ev.originalEvent.changedTouches[0];
+  offset = offset || $el.offset();
+  width = width || $el.outerWidth();
+  height = height || $el.outerHeight();
+  
+  return [
+    (originalEvent.clientX - offset.left)/(height/2) - 1,
+    (originalEvent.clientY - offset.top)/(width/-2) + 1
+  ]
+};
+
+AnalogView.prototype.touchstart = function touchstart(ev) {
+  this.analog.on();
+  this.analog.move.apply(this.analog, getTouchEventPosition(this.$el, ev));
+};
+
+AnalogView.prototype.touchmove = function touchmove(ev) {
+  this.analog.move.apply(this.analog, getTouchEventPosition(this.$el, ev));
+};
+
+AnalogView.prototype.touchend = function touchend(ev) {
+  this.analog.off();
+};
+
+module.exports = AnalogView;
+
+},{}],2:[function(require,module,exports){
+function Analog(opts) {
+  this.cord = opts.cord;
+  this.name = opts.name;
+  this.repeatRate = opts.repeatRate || 100;
+  this.move = this.move.bind(this);
+}
+
+Analog.prototype.on = function on(position) {
+  this.position = { x: 0, y: 0 };
+  this.startInterval();
+}
+
+Analog.prototype.move = function move(x,y) {
+  this.position.x = x;
+  this.position.y = y;
+}
+
+Analog.prototype.off = function off() {
+  this.stopInterval();
+}
+
+Analog.prototype.startInterval = function startInterval() {
+  var self = this;
+  if (!this.interval) {
+    this.interval = setInterval(function() {
+      console.log(self.position);
+      self.emit('moved', self.position);  
+    }, this.repeatRate);
+  }
+};
+
+Analog.prototype.stopInterval = function() {
+  clearInterval(this.interval);
+  this.interval = null;
+};
+
+Analog.prototype.emit = function emit(action, data) {
+  this.cord.emit('analog:'+this.name+':moved', data);
+};
+
+module.exports = Analog;
+
+},{}],3:[function(require,module,exports){
 function ButtonView(opts) {
   if (!opts.button) throw "Button required";
   this.button = opts.button;
@@ -36,7 +157,7 @@ ButtonView.prototype.appendTo = function appendTo($target) {
 
 module.exports = ButtonView;
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 function Button(opts) {
   this.cord = opts.cord;
   this.name = opts.name;
@@ -64,7 +185,7 @@ Button.prototype.startInterval = function startInterval() {
   if (!this.interval) {
     this.interval = setInterval(function() {
       self.emit('pressed');  
-    }, this.firePeriod);
+    }, this.repeatRate);
   }
 };
 
@@ -79,7 +200,7 @@ Button.prototype.emit = function emit() {
 
 module.exports = Button
 
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // var Channel = require('./channel.js')
 // 
 // var channel = new Channel({
@@ -166,7 +287,7 @@ module.exports = function Channel(opts) {
   return { on: on, emit: emit };
 }
 
-},{"bows":6,"simplewebrtc":22,"socket.io-client":23}],4:[function(require,module,exports){
+},{"bows":8,"simplewebrtc":24,"socket.io-client":25}],6:[function(require,module,exports){
 var DpadView = function(opts) {
   if (!opts.buttons) throw "Buttons required";
   this.buttons = opts.buttons;
@@ -212,11 +333,6 @@ DpadView.prototype.bindEvents = function bindEvents() {
     x < -0.5 ? self.buttons.left.press() : self.buttons.left.release();
   })
 
-  ButtonView.prototype.appendTo = function appendTo($target) {
-    this.render();
-    $target.append(this.$el);
-  };
-
   this.$el.on('touchleave touchend', function() {
     self.buttons.up.release();
     self.buttons.down.release();
@@ -234,7 +350,7 @@ DpadView.prototype.appendTo = function appendTo($target) {
 
 module.exports = DpadView;
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var Channel = require('./channel.js');
 var $ = require('jquery-browserify');
 var bows = require('bows');
@@ -250,28 +366,47 @@ var cord = new WildEmitter();
 
 var $ball = $('.ball');
 
-cord.on("button:*", function(event) {
-  var dir = event.split(':')[1];
-  if (dir === 'up') $ball.css({ top: parseInt($ball.css('top'), 10) - 1 });
-  if (dir === 'down') $ball.css({ top: parseInt($ball.css('top'), 10) + 1 });
-  if (dir === 'left') $ball.css({ left: parseInt($ball.css('left'), 10) - 1 });
-  if (dir === 'right') $ball.css({ left: parseInt($ball.css('left'), 10) + 1 });
+cord.on('button:*', function(event) {
+  var button = event.split(':')[1];
+  if (button === 'up') $ball.css({ top: parseInt($ball.css('top'), 10) - 1 });
+  if (button === 'down') $ball.css({ top: parseInt($ball.css('top'), 10) + 1 });
+  if (button === 'left') $ball.css({ left: parseInt($ball.css('left'), 10) - 1 });
+  if (button === 'right') $ball.css({ left: parseInt($ball.css('left'), 10) + 1 });
 })
 
 
+AnalogView = require('./analog-view');
+Analog = require('./analog');
 
-var dpadView = new DpadView({
-  buttons: {
-    up: new Button({ cord: cord, name: 'up' }),
-    down: new Button({ cord: cord, name: 'down' }),
-    left: new Button({ cord: cord, name: 'left' }),
-    right: new Button({ cord: cord, name: 'right' })
-  },
+
+
+cord.on('analog:*', function(event, data) {
+  var stick = event.split(':')[1];
+  $ball.css({ top: parseInt($ball.css('top'), 10) - 10*data.y });
+  $ball.css({ left: parseInt($ball.css('left'), 10) + 10*data.x });
+})
+
+
+var analogView = new AnalogView({
+  analog: new Analog({ cord: cord, name: 'direction' }),
   top: 90,
   left: 45,
   width: 118,
   height: 118
 }).appendTo($('.nes-pad'));
+
+//var dpadView = new DpadView({
+//  buttons: {
+//    up: new Button({ cord: cord, name: 'up' }),
+//    down: new Button({ cord: cord, name: 'down' }),
+//    left: new Button({ cord: cord, name: 'left' }),
+//    right: new Button({ cord: cord, name: 'right' })
+//  },
+//  top: 90,
+//  left: 45,
+//  width: 118,
+//  height: 118
+//}).appendTo($('.nes-pad'));
 
 var buttonView = new ButtonView({
   button: new Button({ cord: cord, name: 'a' }),
@@ -289,7 +424,7 @@ var buttonView = new ButtonView({
   left: 479
 }).appendTo($('.nes-pad'));
 
-},{"./button":2,"./button-view":1,"./channel.js":3,"./dpad-view":4,"bows":6,"fastclick":8,"jquery-browserify":9,"wildemitter":24}],6:[function(require,module,exports){
+},{"./analog":2,"./analog-view":1,"./button":4,"./button-view":3,"./channel.js":5,"./dpad-view":6,"bows":8,"fastclick":10,"jquery-browserify":11,"wildemitter":26}],8:[function(require,module,exports){
 (function() {
   var inNode = typeof window === 'undefined',
       ls = !inNode && window.localStorage,
@@ -334,7 +469,7 @@ var buttonView = new ButtonView({
   }
 }).call();
 
-},{"andlog":7}],7:[function(require,module,exports){
+},{"andlog":9}],9:[function(require,module,exports){
 // follow @HenrikJoreteg and @andyet if you like this ;)
 (function () {
     var inNode = typeof window === 'undefined',
@@ -364,7 +499,7 @@ var buttonView = new ButtonView({
     }
 })();
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * @preserve FastClick: polyfill to remove click delays on browsers with touch UIs.
  *
@@ -1143,7 +1278,7 @@ if (typeof define !== 'undefined' && define.amd) {
 	window.FastClick = FastClick;
 }
 
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // Uses Node, AMD or browser globals to create a module.
 
 // If you want something that will work in other stricter CommonJS environments,
@@ -10477,7 +10612,7 @@ return jQuery;
 
 })( window ); }));
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = function (stream, el, options) {
     var URL = window.URL;
     var opts = {
@@ -10518,7 +10653,7 @@ module.exports = function (stream, el, options) {
     return element;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // getScreenMedia helper by @HenrikJoreteg
 var getUserMedia = require('getusermedia');
 
@@ -10541,7 +10676,7 @@ module.exports = function (cb) {
     getUserMedia(constraints, cb);
 };
 
-},{"getusermedia":12}],12:[function(require,module,exports){
+},{"getusermedia":14}],14:[function(require,module,exports){
 // getUserMedia helper by @HenrikJoreteg
 var func = (navigator.getUserMedia ||
             navigator.webkitGetUserMedia ||
@@ -10605,7 +10740,7 @@ module.exports = function (constraints, cb) {
     });
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var WildEmitter = require('wildemitter');
 
 function getMaxVolume (analyser, fftBins) {
@@ -10698,7 +10833,7 @@ module.exports = function(stream, options) {
   return harker;
 }
 
-},{"wildemitter":21}],14:[function(require,module,exports){
+},{"wildemitter":23}],16:[function(require,module,exports){
 var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
 var l = methods.length;
 var fn = function () {};
@@ -10710,9 +10845,9 @@ while (l--) {
 
 module.exports = mockconsole;
 
-},{}],15:[function(require,module,exports){
-module.exports=require(12)
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
+module.exports=require(14)
+},{}],18:[function(require,module,exports){
 var support = require('webrtcsupport');
 
 
@@ -10759,7 +10894,7 @@ GainController.prototype.on = function () {
 
 module.exports = GainController;
 
-},{"webrtcsupport":17}],17:[function(require,module,exports){
+},{"webrtcsupport":19}],19:[function(require,module,exports){
 // created by @HenrikJoreteg
 var PC = window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.RTCPeerConnection;
 var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
@@ -10789,7 +10924,7 @@ module.exports = {
     IceCandidate: IceCandidate
 };
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var WildEmitter = require('wildemitter');
 var webrtc = require('webrtcsupport');
 
@@ -11011,7 +11146,7 @@ PeerConnection.prototype.createDataChannel = function (name, opts) {
 
 module.exports = PeerConnection;
 
-},{"webrtcsupport":20,"wildemitter":21}],19:[function(require,module,exports){
+},{"webrtcsupport":22,"wildemitter":23}],21:[function(require,module,exports){
 var webrtc = require('webrtcsupport');
 var getUserMedia = require('getusermedia');
 var PeerConnection = require('rtcpeerconnection');
@@ -11418,7 +11553,7 @@ Peer.prototype.handleDataChannelAdded = function (channel) {
 
 module.exports = WebRTC;
 
-},{"getusermedia":15,"hark":13,"mediastream-gain":16,"mockconsole":14,"rtcpeerconnection":18,"webrtcsupport":20,"wildemitter":21}],20:[function(require,module,exports){
+},{"getusermedia":17,"hark":15,"mediastream-gain":18,"mockconsole":16,"rtcpeerconnection":20,"webrtcsupport":22,"wildemitter":23}],22:[function(require,module,exports){
 // created by @HenrikJoreteg
 var prefix;
 var isChrome = false;
@@ -11456,7 +11591,7 @@ module.exports = {
     IceCandidate: IceCandidate
 };
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*
 WildEmitter.js is a slim little event emitter by @henrikjoreteg largely based 
 on @visionmedia's Emitter from UI Kit.
@@ -11593,7 +11728,7 @@ WildEmitter.prototype.getWildcardCallbacks = function (eventName) {
     return result;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var WebRTC = require('webrtc');
 var WildEmitter = require('wildemitter');
 var webrtcSupport = require('webrtcsupport');
@@ -11950,7 +12085,7 @@ SimpleWebRTC.prototype.sendFile = function () {
 
 module.exports = SimpleWebRTC;
 
-},{"attachmediastream":10,"getscreenmedia":11,"mockconsole":14,"webrtc":19,"webrtcsupport":20,"wildemitter":21}],23:[function(require,module,exports){
+},{"attachmediastream":12,"getscreenmedia":13,"mockconsole":16,"webrtc":21,"webrtcsupport":22,"wildemitter":23}],25:[function(require,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -15824,7 +15959,7 @@ if (typeof define === "function" && define.amd) {
   define([], function () { return io; });
 }
 })();
-},{}],24:[function(require,module,exports){
-module.exports=require(21)
-},{}]},{},[5])
+},{}],26:[function(require,module,exports){
+module.exports=require(23)
+},{}]},{},[7])
 ;

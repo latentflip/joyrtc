@@ -13,28 +13,47 @@ var cord = new WildEmitter();
 
 var $ball = $('.ball');
 
-cord.on("button:*", function(event) {
-  var dir = event.split(':')[1];
-  if (dir === 'up') $ball.css({ top: parseInt($ball.css('top'), 10) - 1 });
-  if (dir === 'down') $ball.css({ top: parseInt($ball.css('top'), 10) + 1 });
-  if (dir === 'left') $ball.css({ left: parseInt($ball.css('left'), 10) - 1 });
-  if (dir === 'right') $ball.css({ left: parseInt($ball.css('left'), 10) + 1 });
+cord.on('button:*', function(event) {
+  var button = event.split(':')[1];
+  if (button === 'up') $ball.css({ top: parseInt($ball.css('top'), 10) - 1 });
+  if (button === 'down') $ball.css({ top: parseInt($ball.css('top'), 10) + 1 });
+  if (button === 'left') $ball.css({ left: parseInt($ball.css('left'), 10) - 1 });
+  if (button === 'right') $ball.css({ left: parseInt($ball.css('left'), 10) + 1 });
 })
 
 
+AnalogView = require('./analog-view');
+Analog = require('./analog');
 
-var dpadView = new DpadView({
-  buttons: {
-    up: new Button({ cord: cord, name: 'up' }),
-    down: new Button({ cord: cord, name: 'down' }),
-    left: new Button({ cord: cord, name: 'left' }),
-    right: new Button({ cord: cord, name: 'right' })
-  },
+
+
+cord.on('analog:*', function(event, data) {
+  var stick = event.split(':')[1];
+  $ball.css({ top: parseInt($ball.css('top'), 10) - 10*data.y });
+  $ball.css({ left: parseInt($ball.css('left'), 10) + 10*data.x });
+})
+
+
+var analogView = new AnalogView({
+  analog: new Analog({ cord: cord, name: 'direction' }),
   top: 90,
   left: 45,
   width: 118,
   height: 118
 }).appendTo($('.nes-pad'));
+
+//var dpadView = new DpadView({
+//  buttons: {
+//    up: new Button({ cord: cord, name: 'up' }),
+//    down: new Button({ cord: cord, name: 'down' }),
+//    left: new Button({ cord: cord, name: 'left' }),
+//    right: new Button({ cord: cord, name: 'right' })
+//  },
+//  top: 90,
+//  left: 45,
+//  width: 118,
+//  height: 118
+//}).appendTo($('.nes-pad'));
 
 var buttonView = new ButtonView({
   button: new Button({ cord: cord, name: 'a' }),
