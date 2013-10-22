@@ -14,6 +14,7 @@
     "bows": "~0.2.0",
     "node-uuid": "~1.4.1",
     "jquery-browserify": "",
-    "fastclick": "~0.6.11"
+    "fastclick": "~0.6.11",
+    "zepto-browserify": ""
   }
 }

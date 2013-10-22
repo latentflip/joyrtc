@@ -49,7 +49,6 @@ module.exports = function Channel(opts) {
     channel = peer.channels.unreliable
 
     channel.onmessage = function(event) {
-      log('onmessage', event);
       var message = JSON.parse(event.data);
       var queue = onCallbacks[ message.name];
 

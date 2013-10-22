@@ -1,4 +1,85 @@
 ;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+function ButtonView(opts) {
+  if (!opts.button) throw "Button required";
+  this.button = opts.button;
+  this.width = opts.width || 100;
+  this.height = opts.height || 100;
+  this.top = opts.top || 0;
+  this.left = opts.left || 0;
+  this.template = opts.template || "";
+  this.$el = $('<div>');
+}
+
+ButtonView.prototype.render = function render() {
+  this.$el.append(this.template);
+  this.$el.css({
+    width: this.width,
+    height: this.height,
+    top: this.top,
+    left: this.left,
+    position: 'absolute'
+  })
+  this.bindEvents();
+};
+
+ButtonView.prototype.bindEvents = function bindEvents() {
+  this.$el.on('touchstart', this.button.press)
+  this.$el.on('touchend', this.button.release)
+  this.$el.on('touchleave', this.button.release)
+};
+
+ButtonView.prototype.appendTo = function appendTo($target) {
+  this.render();
+  $target.append(this.$el);
+  return this;
+};
+
+module.exports = ButtonView;
+
+},{}],2:[function(require,module,exports){
+function Button(opts) {
+  this.cord = opts.cord;
+  this.name = opts.name;
+  this.repeatRate = opts.repeatRate || 100;
+  this.press = this.press.bind(this);
+  this.release = this.release.bind(this);
+  this.startInterval = this.startInterval.bind(this);
+  this.stopInterval = this.stopInterval.bind(this);
+  this.emit = this.emit.bind(this);
+};
+
+Button.prototype.press = function press() {
+  this.startInterval();
+};
+Button.prototype.pressOnce = function press() {
+  this.emit('pressed');
+}
+
+Button.prototype.release = function release() {
+  this.stopInterval();
+};
+
+Button.prototype.startInterval = function startInterval() {
+  var self = this;
+  if (!this.interval) {
+    this.interval = setInterval(function() {
+      self.emit('pressed');  
+    }, this.firePeriod);
+  }
+};
+
+Button.prototype.stopInterval = function() {
+  clearInterval(this.interval);
+  this.interval = null;
+};
+
+Button.prototype.emit = function emit() {
+  this.cord.emit('button:'+this.name+':pressed');
+};
+
+module.exports = Button
+
+},{}],3:[function(require,module,exports){
 // var Channel = require('./channel.js')
 // 
 // var channel = new Channel({
@@ -50,7 +131,6 @@ module.exports = function Channel(opts) {
     channel = peer.channels.unreliable
 
     channel.onmessage = function(event) {
-      log('onmessage', event);
       var message = JSON.parse(event.data);
       var queue = onCallbacks[ message.name];
 
@@ -86,66 +166,130 @@ module.exports = function Channel(opts) {
   return { on: on, emit: emit };
 }
 
-},{"bows":3,"simplewebrtc":19,"socket.io-client":20}],2:[function(require,module,exports){
+},{"bows":6,"simplewebrtc":22,"socket.io-client":23}],4:[function(require,module,exports){
+var DpadView = function(opts) {
+  if (!opts.buttons) throw "Buttons required";
+  this.buttons = opts.buttons;
+  this.width = opts.width || 100;
+  this.height = opts.height || 100;
+  this.top = opts.top || 0;
+  this.left = opts.left || 0;
+  this.template = opts.template || "";
+  this.$el = $('<div>');
+}
+
+DpadView.prototype.render = function render() {
+  this.$el.append(this.template);
+  this.$el.css({
+    width: this.width,
+    height: this.height,
+    top: this.top,
+    left: this.left,
+    position: 'absolute'
+  })
+  this.bindEvents();
+};
+
+DpadView.prototype.bindEvents = function bindEvents() {
+  var self = this;
+  var offset, width, height;
+
+  var clientX, clientY;
+
+  this.$el.on('touchstart touchmove', function(ev) {
+    var originalEvent = ev.originalEvent.changedTouches[0];
+    offset = offset || self.$el.offset();
+    width = width || self.$el.outerWidth();
+    height = height || self.$el.outerHeight();
+    
+    var x = (originalEvent.clientX - offset.left)/(height/2) - 1;
+    var y = (originalEvent.clientY - offset.top)/(width/-2) + 1;
+
+    y > 0.5 ? self.buttons.up.press() : self.buttons.up.release();
+    y < -0.5 ? self.buttons.down.press() : self.buttons.down.release();
+    
+    x > 0.5 ? self.buttons.right.press() : self.buttons.right.release();
+    x < -0.5 ? self.buttons.left.press() : self.buttons.left.release();
+  })
+
+  ButtonView.prototype.appendTo = function appendTo($target) {
+    this.render();
+    $target.append(this.$el);
+  };
+
+  this.$el.on('touchleave touchend', function() {
+    self.buttons.up.release();
+    self.buttons.down.release();
+
+    self.buttons.right.release();
+    self.buttons.left.release();
+  });
+}
+
+DpadView.prototype.appendTo = function appendTo($target) {
+  this.render();
+  $target.append(this.$el);
+  return this;
+};
+
+module.exports = DpadView;
+
+},{}],5:[function(require,module,exports){
 var Channel = require('./channel.js');
 var $ = require('jquery-browserify');
 var bows = require('bows');
 var fastclick = require('fastclick');
-
 var log = bows('Gamepad');
+var WildEmitter = require('wildemitter');
+window.$ = $;
+var Button = require('./button');
+var ButtonView = require('./button-view');
+var DpadView = require('./dpad-view');
 
-var channel = new Channel({
-  roomName: 'foo'
-});
+var cord = new WildEmitter();
 
-var up, down, left, right;
+var $ball = $('.ball');
 
-
-$('document').ready(function() {
-	fastclick(document.body);
-
-	setInterval(function() {
-		if (up) channel.emit('button:press', {button: 'up'});
-		if (down) channel.emit('button:press', {button: 'down'});
-		if (left) channel.emit('button:press', {button: 'left'});
-		if (right) channel.emit('button:press', {button: 'right'});
-	}, 25)
-
-	$('#up').on('touchstart', function() {
-		up = true
-	}).bind('touchend', function() {
-	    up = false
-	});
+cord.on("button:*", function(event) {
+  var dir = event.split(':')[1];
+  if (dir === 'up') $ball.css({ top: parseInt($ball.css('top'), 10) - 1 });
+  if (dir === 'down') $ball.css({ top: parseInt($ball.css('top'), 10) + 1 });
+  if (dir === 'left') $ball.css({ left: parseInt($ball.css('left'), 10) - 1 });
+  if (dir === 'right') $ball.css({ left: parseInt($ball.css('left'), 10) + 1 });
+})
 
 
-	$('#down').on('touchstart', function() {
-		down = true
-	}).bind('touchend', function() {
-	    down = false
-	});
 
-	$('#left').on('touchstart', function() {
-	    left = true
-	}).bind('touchend', function() {
-	    left = false
-	});
+var dpadView = new DpadView({
+  buttons: {
+    up: new Button({ cord: cord, name: 'up' }),
+    down: new Button({ cord: cord, name: 'down' }),
+    left: new Button({ cord: cord, name: 'left' }),
+    right: new Button({ cord: cord, name: 'right' })
+  },
+  top: 90,
+  left: 45,
+  width: 118,
+  height: 118
+}).appendTo($('.nes-pad'));
 
-	$('#right').on('touchstart', function() {
-	    right = true
-	}).bind('touchend', function() {
-	    right = false
-	});
+var buttonView = new ButtonView({
+  button: new Button({ cord: cord, name: 'a' }),
+  width: 58,
+  height: 58,
+  top: 151,
+  left: 401
+}).appendTo($('.nes-pad'));
 
-	$('#a').click(function() {
-		channel.emit('button:press', {button: 'A'});
-		log('A button')
-	});
-	$('#b').click(function() {
-		channel.emit('button:press', {button: 'B'});
-		log('B button')
-	});
-});
-},{"./channel.js":1,"bows":3,"fastclick":5,"jquery-browserify":6}],3:[function(require,module,exports){
+var buttonView = new ButtonView({
+  button: new Button({ cord: cord, name: 'b' }),
+  width: 58,
+  height: 58,
+  top: 151,
+  left: 479
+}).appendTo($('.nes-pad'));
+
+},{"./button":2,"./button-view":1,"./channel.js":3,"./dpad-view":4,"bows":6,"fastclick":8,"jquery-browserify":9,"wildemitter":24}],6:[function(require,module,exports){
 (function() {
   var inNode = typeof window === 'undefined',
       ls = !inNode && window.localStorage,
@@ -190,7 +334,7 @@ $('document').ready(function() {
   }
 }).call();
 
-},{"andlog":4}],4:[function(require,module,exports){
+},{"andlog":7}],7:[function(require,module,exports){
 // follow @HenrikJoreteg and @andyet if you like this ;)
 (function () {
     var inNode = typeof window === 'undefined',
@@ -220,7 +364,7 @@ $('document').ready(function() {
     }
 })();
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /**
  * @preserve FastClick: polyfill to remove click delays on browsers with touch UIs.
  *
@@ -999,7 +1143,7 @@ if (typeof define !== 'undefined' && define.amd) {
 	window.FastClick = FastClick;
 }
 
-},{}],6:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // Uses Node, AMD or browser globals to create a module.
 
 // If you want something that will work in other stricter CommonJS environments,
@@ -10333,7 +10477,7 @@ return jQuery;
 
 })( window ); }));
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = function (stream, el, options) {
     var URL = window.URL;
     var opts = {
@@ -10374,7 +10518,7 @@ module.exports = function (stream, el, options) {
     return element;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // getScreenMedia helper by @HenrikJoreteg
 var getUserMedia = require('getusermedia');
 
@@ -10397,7 +10541,7 @@ module.exports = function (cb) {
     getUserMedia(constraints, cb);
 };
 
-},{"getusermedia":9}],9:[function(require,module,exports){
+},{"getusermedia":12}],12:[function(require,module,exports){
 // getUserMedia helper by @HenrikJoreteg
 var func = (navigator.getUserMedia ||
             navigator.webkitGetUserMedia ||
@@ -10461,7 +10605,7 @@ module.exports = function (constraints, cb) {
     });
 };
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var WildEmitter = require('wildemitter');
 
 function getMaxVolume (analyser, fftBins) {
@@ -10554,7 +10698,7 @@ module.exports = function(stream, options) {
   return harker;
 }
 
-},{"wildemitter":18}],11:[function(require,module,exports){
+},{"wildemitter":21}],14:[function(require,module,exports){
 var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
 var l = methods.length;
 var fn = function () {};
@@ -10566,9 +10710,9 @@ while (l--) {
 
 module.exports = mockconsole;
 
-},{}],12:[function(require,module,exports){
-module.exports=require(9)
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+module.exports=require(12)
+},{}],16:[function(require,module,exports){
 var support = require('webrtcsupport');
 
 
@@ -10615,7 +10759,7 @@ GainController.prototype.on = function () {
 
 module.exports = GainController;
 
-},{"webrtcsupport":14}],14:[function(require,module,exports){
+},{"webrtcsupport":17}],17:[function(require,module,exports){
 // created by @HenrikJoreteg
 var PC = window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.RTCPeerConnection;
 var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
@@ -10645,7 +10789,7 @@ module.exports = {
     IceCandidate: IceCandidate
 };
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var WildEmitter = require('wildemitter');
 var webrtc = require('webrtcsupport');
 
@@ -10867,7 +11011,7 @@ PeerConnection.prototype.createDataChannel = function (name, opts) {
 
 module.exports = PeerConnection;
 
-},{"webrtcsupport":17,"wildemitter":18}],16:[function(require,module,exports){
+},{"webrtcsupport":20,"wildemitter":21}],19:[function(require,module,exports){
 var webrtc = require('webrtcsupport');
 var getUserMedia = require('getusermedia');
 var PeerConnection = require('rtcpeerconnection');
@@ -11274,7 +11418,7 @@ Peer.prototype.handleDataChannelAdded = function (channel) {
 
 module.exports = WebRTC;
 
-},{"getusermedia":12,"hark":10,"mediastream-gain":13,"mockconsole":11,"rtcpeerconnection":15,"webrtcsupport":17,"wildemitter":18}],17:[function(require,module,exports){
+},{"getusermedia":15,"hark":13,"mediastream-gain":16,"mockconsole":14,"rtcpeerconnection":18,"webrtcsupport":20,"wildemitter":21}],20:[function(require,module,exports){
 // created by @HenrikJoreteg
 var prefix;
 var isChrome = false;
@@ -11312,7 +11456,7 @@ module.exports = {
     IceCandidate: IceCandidate
 };
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*
 WildEmitter.js is a slim little event emitter by @henrikjoreteg largely based 
 on @visionmedia's Emitter from UI Kit.
@@ -11449,7 +11593,7 @@ WildEmitter.prototype.getWildcardCallbacks = function (eventName) {
     return result;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var WebRTC = require('webrtc');
 var WildEmitter = require('wildemitter');
 var webrtcSupport = require('webrtcsupport');
@@ -11806,7 +11950,7 @@ SimpleWebRTC.prototype.sendFile = function () {
 
 module.exports = SimpleWebRTC;
 
-},{"attachmediastream":7,"getscreenmedia":8,"mockconsole":11,"webrtc":16,"webrtcsupport":17,"wildemitter":18}],20:[function(require,module,exports){
+},{"attachmediastream":10,"getscreenmedia":11,"mockconsole":14,"webrtc":19,"webrtcsupport":20,"wildemitter":21}],23:[function(require,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -15680,5 +15824,7 @@ if (typeof define === "function" && define.amd) {
   define([], function () { return io; });
 }
 })();
-},{}]},{},[2])
+},{}],24:[function(require,module,exports){
+module.exports=require(21)
+},{}]},{},[5])
 ;

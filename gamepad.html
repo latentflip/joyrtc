@@ -58,16 +58,47 @@
             #localVideo {
                 height: 150px;
             }
+            .nes-pad {
+              background: url(img/nes-controller.svg);
+              width: 613px;
+              height: 252px;
+              position: relative;
+            }
+            .gameboard {
+              width: 613px;
+              height: 200px;
+              position: relative;
+            }
+
+            .ball {
+              background: coral;
+              width: 20px;
+              height: 20px;
+              border-radius: 20px;
+              position: absolute;
+              top: 0;
+              left: 0;
+            }
+
+            .d-pad {
+              width: 118px;
+              height: 118px;
+              position: absolute;
+              top: 90px;
+              left: 45px;
+            }
         </style>
     </head>
     <body>
-        <img src="img/nes-controller.svg" />
-        <div id="up" href="#">Up</div>
-        <div id="down" href="#">Down</div>
-        <div id="left" href="#">Left</div>
-        <div id="right" href="#">Right</div>
-        <div id="a" href="#">A</div>
-        <div id="b" href="#">B</div>
-        <script src='gamepad.bundle.js'></script>
+      <div class='gameboard'>
+        <div class='ball'></div>
+      </div>
+      <div class='nes-pad'>
+        <div class='d-pad'>
+
+        </div>
+      </div>
+
+      <script src='gamepad.bundle.js'></script>
     </body>
 </html>

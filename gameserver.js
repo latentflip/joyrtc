@@ -2,10 +2,15 @@ var Channel = require('./channel.js')
 var $ = require('jquery-browserify')
 window.$ = $;
 
+var log = require('bows')('GameServer')
+
 var channel = new Channel({
   roomName: 'foo'
 });
 
+
+var keyUpTimeout = 100;
+var keysDown = {};
 
 function pressKey(key) {
   var keys = {
@@ -22,13 +27,19 @@ function pressKey(key) {
   press.which = press.keyCode = keys[key][0];
 
   $("body").trigger(press);
-  setTimeout(function() {
+  
+  clearTimeout( keysDown[key] )
+
+  keysDown[key] = setTimeout(function() {
     var press = jQuery.Event("keyup");
     press.ctrlKey = false;
     press.which = press.keyCode = keys[key][0];
     $("body").trigger(press);
-  }, 100);
+  }, keyUpTimeout);
 }
+
+
+
 
 window.pressKey = pressKey;
 
